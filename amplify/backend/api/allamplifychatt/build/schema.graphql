@@ -41,9 +41,9 @@ type ConvoLink {
 type Subscription {
   onCreateConvoLink(convoLinkUserId: ID!): ConvoLink @aws_subscribe(mutations: ["createConvoLink"])
   onCreateMessage(messageConversationId: ID!): Message @aws_subscribe(mutations: ["createMessage"])
-  onCreateUser: User @aws_subscribe(mutations: ["createUser"])
-  onUpdateUser: User @aws_subscribe(mutations: ["updateUser"])
-  onDeleteUser: User @aws_subscribe(mutations: ["deleteUser"])
+  onCreateUser(id: String!): User @aws_subscribe(mutations: ["createUser"])
+  onUpdateUser(id: String!): User @aws_subscribe(mutations: ["updateUser"])
+  onDeleteUser(id: String!): User @aws_subscribe(mutations: ["deleteUser"])
 }
 
 enum ModelSortDirection {
@@ -56,7 +56,7 @@ type ModelUserConnection {
   nextToken: String
 }
 
-input ModelStringFilterInput {
+input ModelStringInput {
   ne: String
   eq: String
   le: String
@@ -67,9 +67,12 @@ input ModelStringFilterInput {
   notContains: String
   between: [String]
   beginsWith: String
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
+  size: ModelSizeInput
 }
 
-input ModelIDFilterInput {
+input ModelIDInput {
   ne: ID
   eq: ID
   le: ID
@@ -80,42 +83,57 @@ input ModelIDFilterInput {
   notContains: ID
   between: [ID]
   beginsWith: ID
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
+  size: ModelSizeInput
 }
 
-input ModelIntFilterInput {
+input ModelIntInput {
   ne: Int
   eq: Int
   le: Int
   lt: Int
   ge: Int
   gt: Int
-  contains: Int
-  notContains: Int
   between: [Int]
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
 }
 
-input ModelFloatFilterInput {
+input ModelFloatInput {
   ne: Float
   eq: Float
   le: Float
   lt: Float
   ge: Float
   gt: Float
-  contains: Float
-  notContains: Float
   between: [Float]
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
 }
 
-input ModelBooleanFilterInput {
+input ModelBooleanInput {
   ne: Boolean
   eq: Boolean
+  attributeExists: Boolean
+  attributeType: ModelAttributeTypes
+}
+
+input ModelSizeInput {
+  ne: Int
+  eq: Int
+  le: Int
+  lt: Int
+  ge: Int
+  gt: Int
+  between: [Int]
 }
 
 input ModelUserFilterInput {
-  id: ModelIDFilterInput
-  username: ModelStringFilterInput
-  createdAt: ModelStringFilterInput
-  updatedAt: ModelStringFilterInput
+  id: ModelIDInput
+  username: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
   and: [ModelUserFilterInput]
   or: [ModelUserFilterInput]
   not: ModelUserFilterInput
@@ -146,15 +164,48 @@ input DeleteUserInput {
 }
 
 type Mutation {
-  createUser(input: CreateUserInput!): User
-  updateUser(input: UpdateUserInput!): User
-  deleteUser(input: DeleteUserInput!): User
-  createConvo(input: CreateConversationInput!): Conversation
-  createMessage(input: CreateMessageInput!): Message
-  updateMessage(input: UpdateMessageInput!): Message
-  deleteMessage(input: DeleteMessageInput!): Message
-  createConvoLink(input: CreateConvoLinkInput!): ConvoLink
-  updateConvoLink(input: UpdateConvoLinkInput!): ConvoLink
+  createUser(input: CreateUserInput!, condition: ModelUserConditionInput): User
+  updateUser(input: UpdateUserInput!, condition: ModelUserConditionInput): User
+  deleteUser(input: DeleteUserInput!, condition: ModelUserConditionInput): User
+  createConvo(input: CreateConversationInput!, condition: ModelConversationConditionInput): Conversation
+  createMessage(input: CreateMessageInput!, condition: ModelMessageConditionInput): Message
+  updateMessage(input: UpdateMessageInput!, condition: ModelMessageConditionInput): Message
+  deleteMessage(input: DeleteMessageInput!, condition: ModelMessageConditionInput): Message
+  createConvoLink(input: CreateConvoLinkInput!, condition: ModelConvoLinkConditionInput): ConvoLink
+  updateConvoLink(input: UpdateConvoLinkInput!, condition: ModelConvoLinkConditionInput): ConvoLink
+}
+
+input ModelUserConditionInput {
+  username: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelUserConditionInput]
+  or: [ModelUserConditionInput]
+  not: ModelUserConditionInput
+}
+
+enum ModelAttributeTypes {
+  binary
+  binarySet
+  bool
+  list
+  map
+  number
+  numberSet
+  string
+  stringSet
+  _null
+}
+
+input ModelConversationFilterInput {
+  id: ModelIDInput
+  name: ModelStringInput
+  members: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelConversationFilterInput]
+  or: [ModelConversationFilterInput]
+  not: ModelConversationFilterInput
 }
 
 input CreateConversationInput {
@@ -165,16 +216,25 @@ input CreateConversationInput {
   updatedAt: String
 }
 
-input UpdateConversationInput {
-  id: ID!
-  name: String
-  members: [String!]
-  createdAt: String
-  updatedAt: String
+input ModelConversationConditionInput {
+  name: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelConversationConditionInput]
+  or: [ModelConversationConditionInput]
+  not: ModelConversationConditionInput
 }
 
-input DeleteConversationInput {
-  id: ID
+input ModelMessageFilterInput {
+  id: ModelIDInput
+  authorId: ModelStringInput
+  content: ModelStringInput
+  messageConversationId: ModelIDInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelMessageFilterInput]
+  or: [ModelMessageFilterInput]
+  not: ModelMessageFilterInput
 }
 
 input CreateMessageInput {
@@ -199,6 +259,27 @@ input DeleteMessageInput {
   id: ID
 }
 
+input ModelMessageConditionInput {
+  content: ModelStringInput
+  messageConversationId: ModelIDInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelMessageConditionInput]
+  or: [ModelMessageConditionInput]
+  not: ModelMessageConditionInput
+}
+
+input ModelConvoLinkFilterInput {
+  id: ModelIDInput
+  convoLinkUserId: ModelIDInput
+  convoLinkConversationId: ModelIDInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelConvoLinkFilterInput]
+  or: [ModelConvoLinkFilterInput]
+  not: ModelConvoLinkFilterInput
+}
+
 input CreateConvoLinkInput {
   id: ID
   convoLinkUserId: ID
@@ -215,8 +296,14 @@ input UpdateConvoLinkInput {
   updatedAt: String
 }
 
-input DeleteConvoLinkInput {
-  id: ID
+input ModelConvoLinkConditionInput {
+  convoLinkUserId: ModelIDInput
+  convoLinkConversationId: ModelIDInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
+  and: [ModelConvoLinkConditionInput]
+  or: [ModelConvoLinkConditionInput]
+  not: ModelConvoLinkConditionInput
 }
 
 type ModelConvoLinkConnection {
@@ -224,30 +311,7 @@ type ModelConvoLinkConnection {
   nextToken: String
 }
 
-input ModelConvoLinkFilterInput {
-  id: ModelIDFilterInput
-  convoLinkUserId: ModelIDFilterInput
-  convoLinkConversationId: ModelIDFilterInput
-  createdAt: ModelStringFilterInput
-  updatedAt: ModelStringFilterInput
-  and: [ModelConvoLinkFilterInput]
-  or: [ModelConvoLinkFilterInput]
-  not: ModelConvoLinkFilterInput
-}
-
 type ModelMessageConnection {
   items: [Message]
   nextToken: String
-}
-
-input ModelMessageFilterInput {
-  id: ModelIDFilterInput
-  authorId: ModelStringFilterInput
-  content: ModelStringFilterInput
-  messageConversationId: ModelIDFilterInput
-  createdAt: ModelStringFilterInput
-  updatedAt: ModelStringFilterInput
-  and: [ModelMessageFilterInput]
-  or: [ModelMessageFilterInput]
-  not: ModelMessageFilterInput
 }
